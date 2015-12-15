@@ -25,7 +25,7 @@ app.set('views', __dirname + '/app/views');
 // BOOTSTRAPPING
 console.log('\nBOOTSTRAPPING:'.cyan);
 
-var options = {
+/*var options = {
     denormalizerPath: __dirname + '/viewBuilders',
     repository: {
         type: 'inMemory', //'mongodb',
@@ -35,24 +35,103 @@ var options = {
         type: 'inMemory', //'mongodb',
         dbName: 'cqrssample'
     }
+};*/
+
+var options = {
+    // the path to the "working directory"
+    // can be structured like
+    // [set 1](https://github.com/adrai/node-cqrs-eventdenormalizer/tree/master/test/integration/fixture/set1) or
+    // [set 2](https://github.com/adrai/node-cqrs-eventdenormalizer/tree/master/test/integration/fixture/set2)
+    denormalizerPath:  __dirname + '/viewBuilders',
+
+    // optional, default is 'commandRejected'
+    // will be used to catch AggregateDestroyedError from cqrs-domain
+    commandRejectedEventName: 'rejectedCommand',
+
+    // optional, default is 800
+    // if using in scaled systems, this module tries to catch the concurrency issues and
+    // retries to handle the event after a timeout between 0 and the defined value
+    retryOnConcurrencyTimeout: 1000,
+
+    // optional, default is in-memory
+    // currently supports: mongodb, redis, tingodb, couchdb, azuretable and inmemory
+    // hint: [viewmodel](https://github.com/adrai/node-viewmodel#connecting-to-any-repository-mongodb-in-the-example--modewrite)
+    // hint settings like: [eventstore](https://github.com/adrai/node-eventstore#provide-implementation-for-storage)
+    repository: {
+        type: 'mongodb',
+        host: 'localhost',                          // optional
+        port: 27017,                                // optional
+        dbName: 'readmodel',                        // optional
+        timeout: 10000                              // optional
+        // authSource: 'authedicationDatabase',        // optional
+        // username: 'technicalDbUser',                // optional
+        // password: 'secret'                          // optional
+    },
+
+    // optional, default is in-memory
+    // currently supports: mongodb, redis, tingodb and inmemory
+    // hint settings like: [eventstore](https://github.com/adrai/node-eventstore#provide-implementation-for-storage)
+    revisionGuard: {
+        queueTimeout: 1000,                         // optional, timeout for non-handled events in the internal in-memory queue
+        queueTimeoutMaxLoops: 3,                     // optional, maximal loop count for non-handled event in the internal in-memory queue
+
+        type: 'redis',
+        host: 'localhost',                          // optional
+        port: 6379,                                 // optional
+        db: 0,                                      // optional
+        prefix: 'readmodel_revision',               // optional
+        timeout: 10000                              // optional
+        // password: 'secret'                          // optional
+    }
 };
 
 console.log('1. -> viewmodel'.cyan);
-viewmodel.read(options.repository, function(err, repository) {
+
+viewmodel.read(function(err, repository) {
+    if(err) {
+        console.log('ohhh :-(');
+        return;
+    }
 
     var eventDenormalizer = require('cqrs-eventdenormalizer')(options);
     
     eventDenormalizer.defineEvent({
-      correlationId: 'commandId',
-      id: 'id',
-      name: 'event',
-      aggregateId: 'payload.id',
-      payload: 'payload',
-      revision: 'head.revision'
+        // optional, default is 'correlationId'
+        // will use the command id as correlationId, so you can match it in the sender
+        // will be used to copy the correlationId to the notification
+        correlationId: 'correlationId',
+
+        // optional, default is 'id'
+        id: 'id',
+
+        // optional, default is 'name'
+        name: 'name',
+
+        // optional, default is 'aggregate.id'
+        aggregateId: 'aggregate.id',
+
+        // optional
+        context: 'context.name',
+
+        // optional
+        aggregate: 'aggregate.name',
+
+        // optional, default is 'payload'
+        payload: 'payload',
+
+        // optional, default is 'revision'
+        // will represent the aggregate revision, can be used in next command
+        revision: 'revision',
+
+        // optional
+        version: 'version',
+
+        // optional, if defined the values of the command will be copied to the event (can be used to transport information like userId, etc..)
+        meta: 'meta'
     });
 
     console.log('2. -> eventdenormalizer'.cyan);
-    eventDenormalizer.init(function(err) {
+    eventDenormalizer.init(function(err, warnings) {
         if(err) {
             console.log(err);
         }
@@ -71,12 +150,12 @@ viewmodel.read(options.repository, function(err, repository) {
             eventDenormalizer.handle(data);
         });
 
-        // on receiving an __event__ from eventDenormalizer module:
-        //
-        // - forward it to connected browsers via socket.io
-        eventDenormalizer.onEvent(function(evt) {
-            console.log(colors.magenta('\nsocket.io -- publish event ' + evt.event + ' to browser'));
-            io.sockets.emit('events', evt);
+
+        // pass events to bus
+        eventDenormalizer.onEvent(function (evt, callback) {
+        msgbus.emit('event', evt, function ack () {
+                callback();
+            });
         });
 
         // SETUP COMMUNICATION CHANNELS
