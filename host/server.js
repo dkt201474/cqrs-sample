@@ -1,19 +1,19 @@
 // server.js is the starting point of the host process:
 //
-// `node server.js` 
+// `node server.js`
 var express = require('express')
-  , http = require('http')
-  , colors = require('../colors')
-  , socket = require('socket.io')
-  , viewmodel = require('viewmodel');
+    , http = require('http')
+    , colors = require('../colors')
+    , socket = require('socket.io')
+    , viewmodel = require('viewmodel');
 
 // create an configure:
 //
 // - express webserver
 // - socket.io socket communication from/to browser
 var app = express()
-  , server = http.createServer(app)
-  , io = socket.listen(server);
+    , server = http.createServer(app)
+    , io = socket.listen(server);
 
 app.use(require('body-parser').json());
 app.use(express['static'](__dirname + '/public'));
@@ -25,24 +25,12 @@ app.set('views', __dirname + '/app/views');
 // BOOTSTRAPPING
 console.log('\nBOOTSTRAPPING:'.cyan);
 
-/*var options = {
-    denormalizerPath: __dirname + '/viewBuilders',
-    repository: {
-        type: 'inMemory', //'mongodb',
-        dbName: 'cqrssample'
-    },
-    revisionGuardStore: {
-        type: 'inMemory', //'mongodb',
-        dbName: 'cqrssample'
-    }
-};*/
-
 var options = {
     // the path to the "working directory"
     // can be structured like
     // [set 1](https://github.com/adrai/node-cqrs-eventdenormalizer/tree/master/test/integration/fixture/set1) or
     // [set 2](https://github.com/adrai/node-cqrs-eventdenormalizer/tree/master/test/integration/fixture/set2)
-    denormalizerPath:  __dirname + '/viewBuilders',
+    denormalizerPath: __dirname + '/viewBuilders',
 
     // optional, default is 'commandRejected'
     // will be used to catch AggregateDestroyedError from cqrs-domain
@@ -73,28 +61,23 @@ var options = {
     // hint settings like: [eventstore](https://github.com/adrai/node-eventstore#provide-implementation-for-storage)
     revisionGuard: {
         queueTimeout: 1000,                         // optional, timeout for non-handled events in the internal in-memory queue
-        queueTimeoutMaxLoops: 3,                     // optional, maximal loop count for non-handled event in the internal in-memory queue
+        queueTimeoutMaxLoops: 3,                    // optional, maximal loop count for non-handled event in the internal in-memory queue
 
-        type: 'redis',
+        type: 'mongodb',
         host: 'localhost',                          // optional
-        port: 6379,                                 // optional
-        db: 0,                                      // optional
-        prefix: 'readmodel_revision',               // optional
+        port: 27017,                                // optional
+        db: 'revisionguard',                        // optional
+        //prefix: 'readmodel_revision',             // optional
         timeout: 10000                              // optional
-        // password: 'secret'                          // optional
+        // password: 'secret'                       // optional
     }
-};
+}
 
 console.log('1. -> viewmodel'.cyan);
-
-viewmodel.read(function(err, repository) {
-    if(err) {
-        console.log('ohhh :-(');
-        return;
-    }
+viewmodel.read(options.repository, function(err, repository) {
 
     var eventDenormalizer = require('cqrs-eventdenormalizer')(options);
-    
+
     eventDenormalizer.defineEvent({
         // optional, default is 'correlationId'
         // will use the command id as correlationId, so you can match it in the sender
@@ -105,10 +88,10 @@ viewmodel.read(function(err, repository) {
         id: 'id',
 
         // optional, default is 'name'
-        name: 'name',
+        name: 'event',
 
         // optional, default is 'aggregate.id'
-        aggregateId: 'aggregate.id',
+        aggregateId: 'payload.id',
 
         // optional
         context: 'context.name',
@@ -121,7 +104,7 @@ viewmodel.read(function(err, repository) {
 
         // optional, default is 'revision'
         // will represent the aggregate revision, can be used in next command
-        revision: 'revision',
+        revision: 'head.revision',
 
         // optional
         version: 'version',
@@ -131,7 +114,7 @@ viewmodel.read(function(err, repository) {
     });
 
     console.log('2. -> eventdenormalizer'.cyan);
-    eventDenormalizer.init(function(err, warnings) {
+    eventDenormalizer.init(function(err) {
         if(err) {
             console.log(err);
         }
@@ -150,21 +133,21 @@ viewmodel.read(function(err, repository) {
             eventDenormalizer.handle(data);
         });
 
-
-        // pass events to bus
-        eventDenormalizer.onEvent(function (evt, callback) {
-        msgbus.emit('event', evt, function ack () {
-                callback();
-            });
+        // on receiving an __event__ from eventDenormalizer module:
+        //
+        // - forward it to connected browsers via socket.io
+        eventDenormalizer.onEvent(function(evt) {
+            console.log(colors.magenta('\nsocket.io -- publish event ' + evt.event + ' to browser'));
+            io.sockets.emit('events', evt);
         });
 
         // SETUP COMMUNICATION CHANNELS
 
-        // on receiving __commands__ from browser via socket.io emit them on the ĥub module (which will 
+        // on receiving __commands__ from browser via socket.io emit them on the ĥub module (which will
         // forward it to message bus (redis pubsub))
         io.sockets.on('connection', function(socket) {
             console.log(colors.magenta(' -- connects to socket.io'));
-            
+
             socket.on('commands', function(data) {
                 console.log(colors.magenta('\n -- sends command ' + data.command + ':'));
                 console.log(data);

@@ -1,8 +1,10 @@
 // server.js is the starting point of the domain process:
 //
-// `node server.js` 
+// `node server.js`
 var colors = require('../colors')
-  , msgbus = require('../msgbus');
+    , msgbus = require('../msgbus');
+
+
 
 
 var domain = require('cqrs-domain')({
@@ -26,7 +28,7 @@ var domain = require('cqrs-domain')({
     // global snapshot threshold value for all aggregates
     // defines the amount of loaded events, if there are more events to load, it will do a snapshot, so next loading is faster
     // an individual snapshot threshold defining algorithm can be defined per aggregate (scroll down)
-    snapshotThreshold: 1000,
+    snapshotThreshold: 2,
 
     // optional, default is in-memory
     // currently supports: mongodb, redis, tingodb, azuretable and inmemory
@@ -64,47 +66,47 @@ var domain = require('cqrs-domain')({
     // hint settings like: [eventstore](https://github.com/adrai/node-eventstore#provide-implementation-for-storage)
     deduplication: {
         type: 'redis',
-        ttl: 1000 * 60 * 60 * 1, // 1 hour          // optional
+        ttl: 1000 * 1, // 1 hour          // optional
         host: 'localhost',                          // optional
         port: 6379,                                 // optional
         db: 0,                                      // optional
-        prefix: 'domain_aggregate_lock',            // optional
+        prefix: 'BUMPER_lock',            // optional
         timeout: 10000                              // optional
         // password: 'secret'                          // optional
     }
 });
 
 domain.defineCommand({
-    // optional, default is 'id'
-    id: 'id',
+        // optional, default is 'id'
+        id: 'id',
 
-    // optional, default is 'name'
-    name: 'name',
+        // optional, default is 'name'
+        name: 'command',
 
-    // optional, default is 'aggregate.id'
-    // if an aggregate id is not defined in the command, the command handler will create a new aggregate instance
-    aggregateId: 'aggregate.id',
+        // optional, default is 'aggregate.id'
+        // if an aggregate id is not defined in the command, the command handler will create a new aggregate instance
+        aggregateId: 'payload.id',
 
-    // optional, only makes sense if contexts are defined in the 'domainPath' structure
-    context: 'context.name',
+        // optional, only makes sense if contexts are defined in the 'domainPath' structure
+        context: 'context.name',
 
-    // optional, only makes sense if aggregates with names are defined in the 'domainPath' structure
-    aggregate: 'aggregate.name',
+        // optional, only makes sense if aggregates with names are defined in the 'domainPath' structure
+        aggregate: 'aggregate.name',
 
-    // optional, but recommended
-    payload: 'payload',
+        // optional, but recommended
+        payload: 'payload',
 
-    // optional, if defined the command handler will check if the command can be handled
-    // if you want the command to be handled in a secure/transactional way pass a revision value that matches the current aggregate revision
-    revision: 'revision',
+        // optional, if defined the command handler will check if the command can be handled
+        // if you want the command to be handled in a secure/transactional way pass a revision value that matches the current aggregate revision
+        revision: 'head.revision',
 
-    // optional, if defined the command handler will search for a handle that matches command name and version number
-    version: 'version',
+        // optional, if defined the command handler will search for a handle that matches command name and version number
+        version: 'version',
 
-    // optional, if defined theses values will be copied to the event (can be used to transport information like userId, etc..)
-    meta: 'meta'
-});
-
+        // optional, if defined theses values will be copied to the event (can be used to transport information like userId, etc..)
+        meta: 'meta'
+    }
+);
 domain.defineEvent({
     // optional, default is 'correlationId'
     // will use the command id as correlationId, so you can match it in the sender
@@ -114,10 +116,10 @@ domain.defineEvent({
     id: 'id',
 
     // optional, default is 'name'
-    name: 'name',
+    name: 'event',
 
     // optional, default is 'aggregate.id'
-    aggregateId: 'aggregate.id',
+    aggregateId: 'payload.id',
 
     // optional, only makes sense if contexts are defined in the 'domainPath' structure
     context: 'context.name',
@@ -130,7 +132,7 @@ domain.defineEvent({
 
     // optional, default is 'revision'
     // will represent the aggregate revision, can be used in next command
-    revision: 'revision',
+    revision: 'head.revision',
 
     // optional
     version: 'version',
@@ -142,28 +144,26 @@ domain.defineEvent({
     commitStamp: 'commitStamp'
 });
 
-domain.init(function(err , warnings) {
+domain.init(function(err) {
     if (err) {
         return console.log(err);
     }
 
-    // on receiving a message (__=command__) from msgbus pass it to 
+    // on receiving a message (__=command__) from msgbus pass it to
     // the domain calling the handle function
     msgbus.onCommand(function(cmd) {
         console.log(colors.blue('\ndomain -- received command ' + cmd.command + ' from redis:'));
         console.log(cmd);
-    
+
         console.log(colors.cyan('\n-> handle command ' + cmd.command));
-        
+
         domain.handle(cmd);
     });
 
-
-    // pass events to bus
-     domain.onEvent(function (evt, callback) {
-         msgbus.emit('event', evt, function ack () {
-            callback();
-        });
+    // on receiving a message (__=event) from domain pass it to the msgbus
+    domain.onEvent(function(evt) {
+        console.log('domain: ' + evt.event);
+        msgbus.emitEvent(evt);
     });
 
     console.log('Starting domain service'.cyan);
