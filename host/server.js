@@ -72,7 +72,6 @@ var options = {
         // password: 'secret'                       // optional
     }
 }
-
 console.log('1. -> viewmodel'.cyan);
 viewmodel.read(options.repository, function(err, repository) {
 
@@ -115,6 +114,7 @@ viewmodel.read(options.repository, function(err, repository) {
 
     console.log('2. -> eventdenormalizer'.cyan);
     eventDenormalizer.init(function(err) {
+
         if(err) {
             console.log(err);
         }
@@ -149,6 +149,20 @@ viewmodel.read(options.repository, function(err, repository) {
             console.log(colors.magenta(' -- connects to socket.io'));
 
             socket.on('commands', function(data) {
+
+                if(data.payload.text == 'item')
+                {
+                    data = { id: 'msg3', command: 'createItem', payload: { text: 'item' } }
+                }
+
+                if(data.payload.text == 'machine')
+                {
+                    data = { id: 'msg3', command: 'createMachine', payload: { text: 'machine' } }
+                }
+
+                var k = eventDenormalizer.getInfo();
+                console.log(k);
+
                 console.log(colors.magenta('\n -- sends command ' + data.command + ':'));
                 console.log(data);
 

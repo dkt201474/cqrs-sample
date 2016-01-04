@@ -1,16 +1,15 @@
 module.exports = require('cqrs-eventdenormalizer').defineViewBuilder({
-  name: 'itemCreated',
+  name: 'machineChanged',
   id: 'payload.id'
-}, 'create');
+}, 'update');
 
-/*
-module.exports = require('cqrs-eventdenormalizer').defineViewBuilder({
+/*module.exports = require('cqrs-eventdenormalizer').defineViewBuilder({
     // optional, default is file name without extension,
     // if name is '' it will handle all events that matches
-    name: 'itemCreated',
+    name: 'machineChanged',
 
     // optional
-    aggregate: 'item',
+    aggregate: 'machine',
 
     // optional
     context: 'manufactoring',
@@ -29,4 +28,4 @@ module.exports = require('cqrs-eventdenormalizer').defineViewBuilder({
 
     // optional, default Infinity, all view-builders will be sorted by this value
     priority: 1
-}, 'create');*/
+}, 'update')*/;
