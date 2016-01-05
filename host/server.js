@@ -152,12 +152,12 @@ viewmodel.read(options.repository, function(err, repository) {
 
                 if(data.payload.text == 'item')
                 {
-                    data = { id: 'msg3', command: 'createItem', payload: { text: 'item' } }
+                    data = { id: 'msg3',context: { name: 'item' }, command: 'createItem', payload: { text: 'item' } }
                 }
 
                 if(data.payload.text == 'machine')
                 {
-                    data = { id: 'msg3', command: 'createMachine', payload: { text: 'machine' } }
+                    data = { id: 'msg3',context: { name: 'machine' }, command: 'createMachine', payload: { text: 'machine' } }
                 }
 
                 var k = eventDenormalizer.getInfo();
