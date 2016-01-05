@@ -150,14 +150,24 @@ viewmodel.read(options.repository, function(err, repository) {
 
             socket.on('commands', function(data) {
 
-                if (data.payload.text == 'item')
+                if (data.payload.text == 'item_Agg_IN_manufactoring_Ctx')
                 {
-                    data = { id: 'msg3', aggregate: { name: 'item' }, command: 'createItem', payload: { text: 'item' } }
+                    data = { id: 'msg3', context: { name: 'manufactoring' }, command: 'createItem', payload: { text: 'item_Agg_IN_manufactoring_Ctx' } }
                 }
 
-                if (data.payload.text == 'machine')
+                if (data.payload.text == 'item_Agg_IN_sales_Ctx')
                 {
-                    data = { id: 'msg3', aggregate: { name: 'machine' }, command: 'createMachine', payload: { text: 'machine' } }
+                    data = { id: 'msg3', context: { name: 'sales' }, command: 'createItem', payload: { text: 'item_Agg_IN_sales_Ctx' } }
+                }
+
+                if (data.payload.text == 'machine_Agg_IN_manufactoring_Ctx')
+                {
+                    data = { id: 'msg3', context: { name: 'manufactoring' }, command: 'createMachine', payload: { text: 'machine_Agg_IN_manufactoring_Ctx' } }
+                }
+
+                if (data.payload.text == 'salesinvoice_Agg_IN_sales_Ctx')
+                {
+                    data = { id: 'msg3', context: { name: 'sales' }, command: 'createSalesinvoice', payload: { text: 'salesinvoice_Agg_IN_sales_Ctx' } }
                 }
 
                 var k = eventDenormalizer.getInfo();
