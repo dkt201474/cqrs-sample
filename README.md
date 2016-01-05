@@ -8,7 +8,7 @@ This is a sample implementation of CQRS / Eventsourcing Infrastructure in node.j
 - [eventstore](https://github.com/jamuhl/nodeEventStore)
 - [business-rules and validation](https://github.com/adrai/rule-validator)
 
-### get it up and running
+### get it up and running JUST TESTING
         
 1.  start server in _host_ and _domain_ folder
 
