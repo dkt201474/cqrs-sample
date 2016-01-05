@@ -6,6 +6,12 @@ html(lang="en")
         h1 cqrs-sample
         p At this point of development you can create, change and delete items. 
         p They are saved in a read model for presentation and in an eventstore for domain persitance.
+        
+        Note : 
+        Put text = "item"       if you want to use item     aggregate
+        Put text = "machine"    if you want to use  machine aggregate
+        As i have hardcoded command in host->server.js  , for two aggregates Just for testing ,i din't wan't to ake whole UI
+        
 
         #index-view
             input#newItemText(type="text")
