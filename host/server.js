@@ -149,7 +149,7 @@ viewmodel.read(options.repository, function(err, repository) {
             console.log(colors.magenta(' -- connects to socket.io'));
 
             socket.on('commands', function(data) {
-
+                //Note : Item aggregate in two context manufactoring , sales
                 if (data.payload.text == 'item_Agg_IN_manufactoring_Ctx')
                 {
                     data = { id: 'msg3', context: { name: 'manufactoring' }, command: 'createItem', payload: { text: 'item_Agg_IN_manufactoring_Ctx' } }
