@@ -1,6 +1,8 @@
 module.exports = require('cqrs-eventdenormalizer').defineViewBuilder({
-  name: 'salesinvoiceCreated',
-  id: 'payload.id'
+    name: 'salesinvoiceCreated',
+    aggregate: 'salesinvoice',
+    context: 'sales',
+    id: 'payload.id'
 }, 'create');
 
 /*

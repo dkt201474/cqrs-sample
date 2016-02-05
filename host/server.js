@@ -150,22 +150,13 @@ viewmodel.read(options.repository, function(err, repository) {
 
             socket.on('commands', function(data) {
                 //Note : Item aggregate in two context manufactoring , sales
-                if (data.payload.text == 'item_Agg_IN_manufactoring_Ctx')
-                {
-                    data = { id: 'msg3', context: { name: 'manufactoring' }, command: 'createItem', payload: { text: 'item_Agg_IN_manufactoring_Ctx' } }
-                }
 
-                if (data.payload.text == 'item_Agg_IN_sales_Ctx')
-                {
-                    data = { id: 'msg3', context: { name: 'sales' }, command: 'createItem', payload: { text: 'item_Agg_IN_sales_Ctx' } }
-                }
-
-                if (data.payload.text == 'machine_Agg_IN_manufactoring_Ctx')
+                if (data.payload.text == 'machine')
                 {
                     data = { id: 'msg3', context: { name: 'manufactoring' }, command: 'createMachine', payload: { text: 'machine_Agg_IN_manufactoring_Ctx' } }
                 }
 
-                if (data.payload.text == 'salesinvoice_Agg_IN_sales_Ctx')
+                if (data.payload.text == 'sales')
                 {
                     data = { id: 'msg3', context: { name: 'sales' }, command: 'createSalesinvoice', payload: { text: 'salesinvoice_Agg_IN_sales_Ctx' } }
                 }
