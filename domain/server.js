@@ -89,7 +89,7 @@ domain.defineCommand({
     context: 'context.name',
 
     // optional, only makes sense if aggregates with names are defined in the 'domainPath' structure
-    aggregate: 'aggregate.name',
+    /* aggregate: 'aggregate.name',*/
 
     // optional, but recommended
     payload: 'payload',
@@ -123,7 +123,7 @@ domain.defineEvent({
     context: 'context.name',
 
     // optional, only makes sense if aggregates with names are defined in the 'domainPath' structure
-    aggregate: 'aggregate.name',
+    /*aggregate: 'aggregate.name',*/
 
     // optional, default is 'payload'
     payload: 'payload',
@@ -147,6 +147,7 @@ domain.init(function(err) {
         return console.log(err);
     }
 
+    console.log('vijay')
     // on receiving a message (__=command__) from msgbus pass it to
     // the domain calling the handle function
     msgbus.onCommand(function(cmd) {

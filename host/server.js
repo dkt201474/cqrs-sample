@@ -96,7 +96,7 @@ viewmodel.read(options.repository, function(err, repository) {
         context: 'context.name',
 
         // optional
-        aggregate: 'aggregate.name',
+        /*aggregate: 'aggregate.name',*/
 
         // optional, default is 'payload'
         payload: 'payload',
